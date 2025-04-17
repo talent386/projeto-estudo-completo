@@ -1,0 +1,14 @@
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\bin\Debug\net9.0\ProjetoEstudo.exe
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\bin\Debug\net9.0\ProjetoEstudo.deps.json
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\bin\Debug\net9.0\ProjetoEstudo.runtimeconfig.json
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\bin\Debug\net9.0\ProjetoEstudo.dll
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\bin\Debug\net9.0\ProjetoEstudo.pdb
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.AssemblyInfoInputs.cache
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.AssemblyInfo.cs
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.csproj.CoreCompileInputs.cache
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.dll
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\refint\ProjetoEstudo.dll
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.pdb
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ProjetoEstudo.genruntimeconfig.cache
+C:\Users\Talent\Desktop\Thamine\C# estudo\ProjetoEstudo\obj\Debug\net9.0\ref\ProjetoEstudo.dll

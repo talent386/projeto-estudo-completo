@@ -1,0 +1,22 @@
+[
+    {
+      "id": 1,
+      "nome": "Caixa de Parafusos",
+      "sku": "PRF-001",
+      "quantidade": 120,
+      "localizacao": {
+        "corredor": "A",
+        "prateleira": "3"
+      }
+    },
+    {
+      "id": 2,
+      "nome": "Martelo",
+      "sku": "MRT-010",
+      "quantidade": 50,
+      "localizacao": {
+        "corredor": "B",
+        "prateleira": "1"
+      }
+    }
+  ]

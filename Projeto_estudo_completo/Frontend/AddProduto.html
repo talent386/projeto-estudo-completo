@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Produto</title>
+    <!-- CSS do Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    #forms {
+        padding: 20px;
+    }
+    input {
+        margin: 10px;
+    }
+    body {
+        background-color: aliceblue;
+    }
+</style>
+</head>
+
+<body>
+<section id="forms">
+    <form>
+        <div class="mb-3">
+          <label for="text" class="form-label">Adicionar Produto</label>
+          <input type="text" class="form-control" id="produto" placeholder="produto">
+          <input type="text" class="form-control" id="sku" placeholder="SKU">
+          <input type="number" class="form-control" id="quantidade" placeholder="Quantidade">
+          <label for="text" class="form-label">Localização</label>
+          <input type="text" class="form-control" id="corredor" placeholder="Corredor">
+          <input type="text" class="form-control" id="prateleira" placeholder="Prateleira">
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+      </form>
+      
+</section>
+    
+
+    <script>
+fetch('https://localhost:5001/api/produtos', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    nome: document.getElementById("produto").value,
+    quantidade: document.getElementById("sku").value,
+    sku: parseInt(document.getElementById('quantidade').value),
+    corredor: document.getElementById("corredor").value,
+    prateleira: document.getElementById("prateleira").value
+  })
+})
+.then(res => res.json())
+.then(data => {
+  console.log(data.mensagem);
+})
+.catch(err => console.error('Erro:', err));
+
+
+    </script>
+</body>
+</html>
+
