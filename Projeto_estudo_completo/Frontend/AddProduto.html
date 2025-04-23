@@ -24,7 +24,7 @@
     <form>
         <div class="mb-3">
           <label for="text" class="form-label">Adicionar Produto</label>
-          <input type="text" class="form-control" id="produto" placeholder="produto">
+          <input type="text" class="form-control" id="nome" placeholder="produto">
           <input type="text" class="form-control" id="sku" placeholder="SKU">
           <input type="number" class="form-control" id="quantidade" placeholder="Quantidade">
           <label for="text" class="form-label">Localização</label>
@@ -38,27 +38,38 @@
     
 
     <script>
-fetch('https://localhost:5001/api/produtos', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    nome: document.getElementById("produto").value,
-    quantidade: document.getElementById("sku").value,
-    sku: parseInt(document.getElementById('quantidade').value),
-    corredor: document.getElementById("corredor").value,
-    prateleira: document.getElementById("prateleira").value
-  })
-})
-.then(res => res.json())
-.then(data => {
-  console.log(data.mensagem);
-})
-.catch(err => console.error('Erro:', err));
+const form = document.getElementById('produtoForm');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
 
+      const produto = {
+        nome: document.getElementById('nome').value,
+        quantidade: parseInt(document.getElementById('quantidade').value),
+        sku: document.getElementById('sku').value,
+        corredor: document.getElementById('corredor').value,
+        prateleira: document.getElementById('prateleira').value
+      };
+
+      fetch('https://localhost:5001/api/produtos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(produto)
+      })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.mensagem);
+          form.reset();
+        })
+        .catch(error => {
+          console.error('Erro ao salvar:', error);
+          alert('Erro ao salvar o produto.');
+        });
+    });
 
     </script>
 </body>
 </html>
+
 
