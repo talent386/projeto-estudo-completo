@@ -1,49 +1,67 @@
-﻿// See https://aka.ms/new-console-template for more information
+
 using System;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 
 
-class Program
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors();
+
+var app = builder.Build();
+
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+string caminhoArquivo = "Data.json";
+
+// Modelo Produto
+public class Produto
 {
-    // Classe para armazenar os dados
-    public class Produto
-    {
-        public string Produto { get; set; }
-        public int Quantidade { get; set; }
-        public string SKU { get; set; }
-        public string Corredor { get; set; }
-        public string Prateleira { get; set; }
-    }
-
-    static void Main(string[] args)
-    {
-        // Coleta de dados
-        
-
-        // Criação do objeto
-        Produto produto = new Produto
-        {
-            Produto = produto,
-            SKU = sku,
-            Quantidade = quantidade,
-            localização {
-                Corredor = corredor
-                Prateleira = prateleira
-            }
-
-        };
-
-        // Serializa para JSON
-       string json = JsonSerializer.Serialize(produto, new JsonSerializerOptions { WriteIndented = true });
-
-        // Caminho do arquivo JSON
-        string caminho = "Data.json";
-
-        // Escrevendo no arquivo (append)
-        File.AppendAllText(caminho, json + Environment.NewLine);
-
-        Console.WriteLine("\nProduto salvo em JSON:");
-        Console.WriteLine(json);
-    }
+    public string Nome { get; set; }
+    public int Quantidade { get; set; }
+    public string SKU { get; set; }
+    public string Corredor { get; set; }
+    public string Prateleira { get; set; }
 }
+
+// Endpoint POST - Adiciona um novo produto
+app.MapPost("/api/produtos", async (Produto novoProduto) =>
+{
+    List<Produto> produtos = new();
+
+    if (File.Exists(caminhoArquivo))
+    {
+        string conteudo = await File.ReadAllTextAsync(caminhoArquivo);
+        if (!string.IsNullOrWhiteSpace(conteudo))
+            produtos = JsonSerializer.Deserialize<List<Produto>>(conteudo) ?? new List<Produto>();
+    }
+
+    produtos.Add(novoProduto);
+
+    string jsonAtualizado = JsonSerializer.Serialize(produtos, new JsonSerializerOptions { WriteIndented = true });
+    await File.WriteAllTextAsync(caminhoArquivo, jsonAtualizado);
+
+    return Results.Ok(new { mensagem = "Produto salvo com sucesso!" });
+});
+
+// Endpoint GET - Buscar produto por SKU
+app.MapGet("/api/produtos/{sku}", (string sku) =>
+{
+    if (!File.Exists(caminhoArquivo))
+        return Results.NotFound("Arquivo não encontrado.");
+
+    string conteudo = File.ReadAllText(caminhoArquivo);
+    var produtos = JsonSerializer.Deserialize<List<Produto>>(conteudo);
+    var produto = produtos?.FirstOrDefault(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase));
+
+    if (produto == null)
+        return Results.NotFound("Produto não encontrado.");
+
+    return Results.Ok(produto);
+});
+
+app.Run();
