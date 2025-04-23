@@ -24,14 +24,12 @@
 <body>
 <section id="busca">
    <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="SKU" aria-label="Recipient's username" aria-describedby="button-addon2">
-        <button class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
+        <input type="text" class="form-control" placeholder="SKU" id="inputSku" aria-label="Recipient's username" aria-describedby="button-addon2">
+        <button onclick="buscarProduto()" class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
       </div>
 </section>
 <section id="produtos">
-<ul>
-    <li></li>
-</ul>
+    <div id="resultadoProduto"></div>
 </section>
 <footer>
 
@@ -39,9 +37,28 @@
     
 
     <script>
+function buscarProduto() {
+    const sku = document.getElementById('inputSku').value;
 
-
-
+    fetch(`https://localhost:5001/api/produtos/${sku}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Produto não encontrado');
+        }
+        return response.json();
+      })
+      .then(produto => {
+        document.getElementById('resultadoProduto').innerHTML = `
+          <p><strong>Nome:</strong> ${produto.nome}</p>
+          <p><strong>Quantidade:</strong> ${produto.quantidade}</p>
+          <p><strong>Corredor:</strong> ${produto.corredor}</p>
+          <p><strong>Prateleira:</strong> ${produto.prateleira}</p>
+        `;
+      })
+      .catch(error => {
+        document.getElementById('resultadoProduto').innerHTML = `<p style="color: red;">${error.message}</p>`;
+      });
+  }
     </script>
 </body>
 </html>
