@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+<style>
+    body {
+        background-color: aliceblue;
+    }
+</style>
+</head>
+<body>
+    <select  id="localSelect" class="form-select" aria-label="Default select example" style="margin: 10px;">
+        <option selected>Open this select menu</option>
+        <option value="1">Tool Crib</option>
+        <option value="2">Sheet Metal Racks</option>
+        <option value="3">Paint Shop</option>
+        <option value="4">Paint Storage</option>
+        <option value="5">Metal Storage</option>
+        <option value="6">Miscellaneous Storage</option>
+        <option value="7">Finished Goods Storage</option>
+        <option value="8">Frame Forming</option>
+        <option value="9">Frame Welding</option>
+        <option value="10">Debur and Polish</option>
+        <option value="11">Paint</option>
+        <option value="12">Specialized Paint</option>
+        <option value="13">Subassembly</option>
+        <option value="14">Final Assembly</option>
+      </select>
+      <div id="produtos"></div>
+
+    <script>
+const selectElement = document.getElementById('localSelect');
+        const produtosDiv = document.getElementById('produtos');
+
+        selectElement.addEventListener('change', function () {
+            const value = parseInt(this.value); // converte pra número
+
+            if (value === 1) {
+                produtosDiv.innerHTML = 'Você selecionou Tool Crib';
+            } else if (value === 2) {
+                produtosDiv.innerHTML = 'Você selecionou Sheet Metal Racks';
+            } else if (value === 3) {
+                produtosDiv.innerHTML = 'Você selecionou Paint Shop';
+            } else if (value === 4) {
+                produtosDiv.innerHTML = 'Você selecionou Paint Storage';
+            } else if (value === 5) {
+                produtosDiv.innerHTML = 'Você selecionou Metal Storage';
+            } else if (value === 6) {
+                produtosDiv.innerHTML = 'Você selecionou Miscellaneous Storage';
+            } else if (value === 7) {
+                produtosDiv.innerHTML = 'Você selecionou Finished Goods Storage';
+            } else if (value === 8) {
+                produtosDiv.innerHTML = 'Você selecionou Frame Forming';
+            } else if (value === 9) {
+                produtosDiv.innerHTML = 'Você selecionou Frame Welding';
+            } else if (value === 10) {
+                produtosDiv.innerHTML = 'Você selecionou Debur and Polish';
+            } else if (value === 11) {
+                produtosDiv.innerHTML = 'Você selecionou Paint';
+            } else if (value === 12) {
+                produtosDiv.innerHTML = 'Você selecionou Specialized Paint';
+            } else if (value === 13) {
+                produtosDiv.innerHTML = 'Você selecionou Subassembly';
+            } else if (value === 14) {
+                produtosDiv.innerHTML = 'Você selecionou Final Assembly';
+            } else {
+                produtosDiv.innerHTML = '';
+            }
+        });
+
+    </script>
+</body>
+</html>
