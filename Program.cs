@@ -5,7 +5,6 @@ using System.Data.Common;
 using System;
 using Microsoft.AspNetCore.Builder;
 
-// SqlConnection conexao = new SqlConnection("");
 
   
 //         conexao.Open();
@@ -24,12 +23,26 @@ using Microsoft.AspNetCore.Builder;
 //               Console.WriteLine(conexao.State.ToString());
 
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy  =>
+                      {
+                          policy.WithOrigins("http://127.0.0.1:3000") // <-- CORREÇÃO AQUI
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
 var app = builder.Build();
 
+app.UseCors(MyAllowSpecificOrigins);
+
 // Endpoint GET /api/dados que chama a stored procedure
-app.MapGet("/api/dados", async () =>
+app.MapGet("/api/dados/{location}", async (int location) =>
 {
     // *** Ajuste sua connection string aqui! ***
     var connectionString = "";
@@ -41,7 +54,7 @@ app.MapGet("/api/dados", async () =>
     };
 
     // Se a sua SP tiver parâmetros, faça algo tipo:
-    cmd.Parameters.AddWithValue("@Location", 1);
+    cmd.Parameters.AddWithValue("@Location", location);
 
     await conn.OpenAsync();
     await using var reader = await cmd.ExecuteReaderAsync();
@@ -58,41 +71,14 @@ app.MapGet("/api/dados", async () =>
     return Results.Ok(resultados);
 });
 
+
 app.Run();
 
 
-// using System.Data;
-// using System.Data.SqlClient;
 
-// string conexaoString = "sua_string_de_conexao_aqui";
-// using (SqlConnection conexao = new SqlConnection(conexaoString))
-// {
-//     conexao.Open();
 
-//     // Cria o comando para executar a Stored Procedure
-//     using (SqlCommand comando = new SqlCommand("NomeDaSuaProcedure", conexao))
-//     {
-//         comando.CommandType = CommandType.StoredProcedure;
 
-//         // Cria o parâmetro
-//         SqlParameter parametroId = new SqlParameter("@IdCliente", SqlDbType.Int);
-//         parametroId.Value = 1; // valor inicial
 
-//         SqlParameter parametroNome = new SqlParameter("@NomeCliente", SqlDbType.NVarChar, 100);
-//         parametroNome.Value = "João"; // valor inicial
-
-//         // Adiciona os parâmetros ao comando
-//         comando.Parameters.Add(parametroId);
-//         comando.Parameters.Add(parametroNome);
-
-//         // Agora, se quiser alterar o valor do parâmetro antes de executar:
-//         parametroId.Value = 5; // novo valor
-//         parametroNome.Value = "Maria"; // novo valor
-
-//         // Executa a procedure
-//         comando.ExecuteNonQuery();
-//     }
-// }
 
 
 
