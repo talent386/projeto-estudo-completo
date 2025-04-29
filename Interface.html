@@ -21,56 +21,54 @@
         <option value="5">Metal Storage</option>
         <option value="6">Miscellaneous Storage</option>
         <option value="7">Finished Goods Storage</option>
-        <option value="8">Frame Forming</option>
-        <option value="9">Frame Welding</option>
-        <option value="10">Debur and Polish</option>
-        <option value="11">Paint</option>
-        <option value="12">Specialized Paint</option>
-        <option value="13">Subassembly</option>
-        <option value="14">Final Assembly</option>
+        <option value="10">Frame Forming</option>
+        <option value="20">Frame Welding</option>
+        <option value="30">Debur and Polish</option>
+        <option value="40">Paint</option>
+        <option value="45">Specialized Paint</option>
+        <option value="50">Subassembly</option>
+        <option value="60">Final Assembly</option>
       </select>
-      <div id="produtos"></div>
-
-    <script>
-const selectElement = document.getElementById('localSelect');
-        const produtosDiv = document.getElementById('produtos');
-
-        selectElement.addEventListener('change', function () {
-            const value = parseInt(this.value); // converte pra número
-
-            if (value === 1) {
-                produtosDiv.innerHTML = 'Você selecionou Tool Crib';
-            } else if (value === 2) {
-                produtosDiv.innerHTML = 'Você selecionou Sheet Metal Racks';
-            } else if (value === 3) {
-                produtosDiv.innerHTML = 'Você selecionou Paint Shop';
-            } else if (value === 4) {
-                produtosDiv.innerHTML = 'Você selecionou Paint Storage';
-            } else if (value === 5) {
-                produtosDiv.innerHTML = 'Você selecionou Metal Storage';
-            } else if (value === 6) {
-                produtosDiv.innerHTML = 'Você selecionou Miscellaneous Storage';
-            } else if (value === 7) {
-                produtosDiv.innerHTML = 'Você selecionou Finished Goods Storage';
-            } else if (value === 8) {
-                produtosDiv.innerHTML = 'Você selecionou Frame Forming';
-            } else if (value === 9) {
-                produtosDiv.innerHTML = 'Você selecionou Frame Welding';
-            } else if (value === 10) {
-                produtosDiv.innerHTML = 'Você selecionou Debur and Polish';
-            } else if (value === 11) {
-                produtosDiv.innerHTML = 'Você selecionou Paint';
-            } else if (value === 12) {
-                produtosDiv.innerHTML = 'Você selecionou Specialized Paint';
-            } else if (value === 13) {
-                produtosDiv.innerHTML = 'Você selecionou Subassembly';
-            } else if (value === 14) {
-                produtosDiv.innerHTML = 'Você selecionou Final Assembly';
-            } else {
-                produtosDiv.innerHTML = '';
-            }
+      
+      <ul id="produtosDiv" class="list-group mx-3 mt-2"></ul>
+    
+      <script>
+        const selectElement = document.getElementById('localSelect');
+        const produtosDiv = document.getElementById('produtosDiv');
+    
+        selectElement.addEventListener('change', async function () {
+          const value = parseInt(this.value);
+    
+          // Busca e exibe os dados
+          const produtos = await getData(value);
+          exibirProdutos(produtos);
         });
-
-    </script>
-</body>
-</html>
+    
+        async function getData(value) {
+          const url = `http://localhost:5000/api/dados/${value}`;
+          try {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            const json = await response.json();
+            return json;
+          } catch (error) {
+            console.error('Erro ao buscar dados:', error.message);
+            return []; 
+          }
+        }
+    
+        function exibirProdutos(produtos) {
+          produtosDiv.innerHTML = ''; // limpa
+    
+          produtos.forEach(produto => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.innerHTML = `<strong>${produto.Name}</strong> (ID: ${produto.ProductID}) - Quantidade: ${produto.Quantity}`;
+            produtosDiv.appendChild(li);
+          });
+        }
+      </script>
+    </body>
+    </html>
