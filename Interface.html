@@ -12,63 +12,111 @@
 </style>
 </head>
 <body>
-    <select  id="localSelect" class="form-select" aria-label="Default select example" style="margin: 10px;">
-        <option selected>Open this select menu</option>
-        <option value="1">Tool Crib</option>
-        <option value="2">Sheet Metal Racks</option>
-        <option value="3">Paint Shop</option>
-        <option value="4">Paint Storage</option>
-        <option value="5">Metal Storage</option>
-        <option value="6">Miscellaneous Storage</option>
-        <option value="7">Finished Goods Storage</option>
-        <option value="10">Frame Forming</option>
-        <option value="20">Frame Welding</option>
-        <option value="30">Debur and Polish</option>
-        <option value="40">Paint</option>
-        <option value="45">Specialized Paint</option>
-        <option value="50">Subassembly</option>
-        <option value="60">Final Assembly</option>
-      </select>
+
+    <select  id="localSelect" class="form-select" aria-label="Default select example" style="margin: 10px;" onclick=""></select>
       
-      <ul id="produtosDiv" class="list-group mx-3 mt-2"></ul>
+      <div id="cardResumo" style="margin: 10px;"></div>
+      <ul id="produtosDiv" class="list-group"></ul>
+     
+
     
       <script>
-        const selectElement = document.getElementById('localSelect');
-        const produtosDiv = document.getElementById('produtosDiv');
-    
-        selectElement.addEventListener('change', async function () {
-          const value = parseInt(this.value);
-    
-          // Busca e exibe os dados
-          const produtos = await getData(value);
-          exibirProdutos(produtos);
-        });
-    
+        // Função para buscar os locais no carregamento da página
+        async function carregarLocais() {
+          const locais = await getLocation();
+          if (!locais) return;
+          exibirLocais(locais); // Corrigido
+        }
+      
+        // Requisição GET para buscar os locais
+        async function getLocation() {
+          const url = `http://localhost:5000/api/location`;
+          try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            return await response.json();
+          } catch (error) {
+            console.error('Erro ao buscar locais:', error.message);
+            return null;
+          }
+        }
+      
+        // Exibir locais no dropdown
+        function exibirLocais(locais) {
+          const select = document.getElementById('localSelect');
+          select.innerHTML = '<option selected disabled>Selecione um local</option>';
+      
+          locais.forEach(local => {
+            const option = document.createElement('option');
+            option.value = local.LocationID;
+            option.textContent = local.Name;
+            select.appendChild(option);
+          });
+        }
+      
+        // Requisição GET para buscar os dados por LocationID
         async function getData(value) {
           const url = `http://localhost:5000/api/dados/${value}`;
           try {
             const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            const json = await response.json();
-            return json;
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            return await response.json();
           } catch (error) {
             console.error('Erro ao buscar dados:', error.message);
-            return []; 
+            return null;
           }
         }
-    
+      
+        // Exibir produtos na lista
         function exibirProdutos(produtos) {
-          produtosDiv.innerHTML = ''; // limpa
-    
+          const produtosDiv = document.getElementById('produtosDiv');
+          produtosDiv.innerHTML = '';
+      
           produtos.forEach(produto => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.innerHTML = `<strong>${produto.Name}</strong> (ID: ${produto.ProductID}) - Quantidade: ${produto.Quantity}`;
-            produtosDiv.appendChild(li);
+            const item = document.createElement('li');
+            item.classList.add('list-group-item');
+            item.innerHTML = `<strong>${produto.Name}</strong> (ID: ${produto.ProductID}) - Quantidade: ${produto.Quantity}`;
+            produtosDiv.appendChild(item);
           });
         }
+      
+        // Exibir o card com resumo
+        function exibirCard(card) {
+          const cardDiv = document.getElementById('cardResumo');
+          cardDiv.innerHTML = `
+            <div style="display: flex;">
+              <div class="card border-primary mb-3" style="max-width: fit-content; margin: 10px">
+                <div class="card-header">Total de Produtos</div>
+                <div class="card-body text-primary">
+                  <h5 class="card-title text-center">${card.Produtos_total}</h5>
+                </div>
+              </div>
+              <div class="card border-primary mb-3" style="max-width: fit-content; margin: 10px">
+                <div class="card-header">Quantidade Total</div>
+                <div class="card-body text-primary">
+                  <h5 class="card-title text-center">${card.Quantidade_total}</h5>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      
+        // Listener do select
+        const selectElement = document.getElementById('localSelect');
+        selectElement.addEventListener('change', async function () {
+          const value = parseInt(this.value);
+          const data = await getData(value);
+          if (!data) return;
+          exibirProdutos(data.produtos);
+          exibirCard(data.card);
+        });
+      
+        // Carrega os locais ao iniciar a página
+        window.onload = carregarLocais;
+      </script>
+      
+    </body>
+    </html>
       </script>
     </body>
     </html>
