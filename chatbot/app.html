@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Flutuante</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+.chatbot-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.chat-container {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 350px;
+    height: 400px;
+    display: none;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    z-index: 999;
+}
+
+.chat-box {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-header {
+    background-color: #4CAF50;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    align-items: center;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 300px;
+    border-bottom: 1px solid #ccc;
+}
+
+.chat-input {
+    display: flex;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.chat-input input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.chat-input button {
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background-color: #45a049;
+}
+
+#closeBtn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+
+    </style>
+</head>
+<body>
+    <!-- Botão flutuante -->
+    <div class="chatbot-btn" id="chatbotBtn">
+        <span>💬</span>
+    </div>
+
+    <!-- Janela do chat -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-box">
+            <div class="chat-header">
+                <h2>Suporte</h2>
+                <button id="closeBtn">X</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- As mensagens do chat aparecem aqui -->
+            </div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Digite sua mensagem..." />
+                <button id="sendBtn">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+      // Abrir e fechar o chat
+document.getElementById('chatbotBtn').addEventListener('click', function () {
+    const chatContainer = document.getElementById('chatContainer');
+    chatContainer.style.display = 'flex';
+});
+
+document.getElementById('closeBtn').addEventListener('click', function () {
+    const chatContainer = document.getElementById('chatContainer');
+    chatContainer.style.display = 'none';
+});
+
+// Enviar mensagem
+document.getElementById('sendBtn').addEventListener('click', function () {
+    let userInput = document.getElementById('userInput').value;
+
+    if (userInput.trim() !== '') {
+        addMessage('Você: ' + userInput);
+        document.getElementById('userInput').value = '';
+
+        // Envia a mensagem para o backend
+        fetch('http://localhost:8000/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: userInput }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            addMessage('Chatbot: ' + data.response);
+        })
+        .catch(error => {
+            console.error('Erro ao enviar mensagem:', error);
+            addMessage('Chatbot: Erro ao se comunicar com o servidor.');
+        });
+    }
+});
+
+
+
+
+
+function addMessage(message) {
+    let chatMessages = document.getElementById('chatMessages');
+    let messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight; // Rolagem automática para a última mensagem
+}
+
+    </script>
+</body>
+</html>
