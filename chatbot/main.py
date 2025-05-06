@@ -41,7 +41,7 @@ def chat(message: Message):
 
 def generate():
     client = genai.Client(
-        api_key="AIzaSyA96BV2KDavAS3vCjNJPg7IDYgQKSq-IZk"
+        api_key=""
     )
 
     files = [
