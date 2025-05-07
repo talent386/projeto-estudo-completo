@@ -1,11 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Flutuante</title>
-    <style>
+  <meta charset="UTF-8">
+  <title>Chat WMS</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+
+  <style>
+
 * {
     margin: 0;
     padding: 0;
@@ -21,7 +23,7 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #4CAF50;
+    background-color: #4c5eaf;
     color: white;
     border-radius: 50%;
     width: 60px;
@@ -39,8 +41,8 @@ body {
     position: fixed;
     bottom: 80px;
     right: 20px;
-    width: 350px;
-    height: 400px;
+    width: 550px;
+    height: 600px;
     display: none;
     flex-direction: column;
     border: 1px solid #ccc;
@@ -57,7 +59,7 @@ body {
 }
 
 .chat-header {
-    background-color: #4CAF50;
+    background-color: #4c5eaf;
     color: white;
     display: flex;
     justify-content: space-between;
@@ -71,7 +73,7 @@ body {
     flex-grow: 1;
     padding: 10px;
     overflow-y: auto;
-    max-height: 300px;
+    max-height: 500px;
     border-bottom: 1px solid #ccc;
 }
 
@@ -94,7 +96,7 @@ body {
 
 .chat-input button {
     padding: 10px 15px;
-    background-color: #4CAF50;
+    background-color: #4c5eaf;
     color: white;
     border: none;
     border-radius: 4px;
@@ -102,7 +104,7 @@ body {
 }
 
 .chat-input button:hover {
-    background-color: #45a049;
+    background-color: #4c5eaf;
 }
 
 #closeBtn {
@@ -113,84 +115,155 @@ body {
     cursor: pointer;
 }
 
-
-    </style>
-</head>
-<body>
-    <!-- Botão flutuante -->
-    <div class="chatbot-btn" id="chatbotBtn">
-        <span>💬</span>
-    </div>
-
-    <!-- Janela do chat -->
-    <div class="chat-container" id="chatContainer">
-        <div class="chat-box">
-            <div class="chat-header">
-                <h2>Suporte</h2>
-                <button id="closeBtn">X</button>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <!-- As mensagens do chat aparecem aqui -->
-            </div>
-            <div class="chat-input">
-                <input type="text" id="userInput" placeholder="Digite sua mensagem..." />
-                <button id="sendBtn">Enviar</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-
-      // Abrir e fechar o chat
-document.getElementById('chatbotBtn').addEventListener('click', function () {
-    const chatContainer = document.getElementById('chatContainer');
-    chatContainer.style.display = 'flex';
-});
-
-document.getElementById('closeBtn').addEventListener('click', function () {
-    const chatContainer = document.getElementById('chatContainer');
-    chatContainer.style.display = 'none';
-});
-
-// Enviar mensagem
-document.getElementById('sendBtn').addEventListener('click', function () {
-    let userInput = document.getElementById('userInput').value;
-
-    if (userInput.trim() !== '') {
-        addMessage('Você: ' + userInput);
-        document.getElementById('userInput').value = '';
-
-        // Envia a mensagem para o backend
-        fetch('http://localhost:8000/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: userInput }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            addMessage('Chatbot: ' + data.response);
-        })
-        .catch(error => {
-            console.error('Erro ao enviar mensagem:', error);
-            addMessage('Chatbot: Erro ao se comunicar com o servidor.');
-        });
-    }
-});
-
-
-
-
-
-function addMessage(message) {
-    let chatMessages = document.getElementById('chatMessages');
-    let messageElement = document.createElement('div');
-    messageElement.textContent = message;
-    chatMessages.appendChild(messageElement);
-    chatMessages.scrollTop = chatMessages.scrollHeight; // Rolagem automática para a última mensagem
+.message-class {
+    background-color: #f1f1f1; /* Exemplo de cor de fundo */
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-    </script>
+    
+  </style>
+</head>
+<body>
+  <div class="chatbot-btn" id="chatbotBtn"><span>💬</span></div>
+
+  <div class="chat-container" id="chatContainer">
+    <div class="chat-box">
+      <div class="chat-header">
+        <h2>Suporte</h2>
+        <button id="closeBtn">X</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Digite sua mensagem..." />
+        <button id="sendBtn">Enviar</button>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" />
+    </div>
+  </div>
+
+  <script type="module">
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+    const API_KEY = ""; // Substitua pela sua chave
+
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    let manualText = "";
+
+    // Carrega texto do PDF manual de uma URL pública (necessário CORS permitido)
+    async function carregarManualPDF() {
+      const pdfUrl = "data\\Manual_WMS.pdf"; 
+
+      const pdfjsLib = window['pdfjs-dist/build/pdf'];
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+      const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+      let texto = '';
+      for (let i = 0; i < pdf.numPages && i < 3; i++) { // Limita a 3 páginas
+        const page = await pdf.getPage(i + 1);
+        const content = await page.getTextContent();
+        texto += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      manualText = texto;
+    }
+
+    // Envia a mensagem para o Gemini
+    async function enviarMensagem(mensagemUsuario) {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
+      const prompt = `Você é um assistente de suporte para um sistema WMS. Use o manual abaixo:
+
+${manualText}
+
+O problema é: ${mensagemUsuario}
+
+Se não souber, oriente o usuário a entrar em contato com o suporte via WhatsApp.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const texto = await response.text();
+      addMessage("Chatbot: " + texto);
+    }
+
+
+    document.getElementById('imageInput').addEventListener('change', async function (event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = async function (e) {
+    const base64Image = e.target.result.split(',')[1]; // Remove o prefixo data:image/png;base64,
+    addImageToChat(base64Image);
+
+    // Enviar imagem + prompt ao Gemini
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
+
+    const result = await model.generateContent([
+      { text: `Analise essa imagem. Com base no Use o manual: ${manualText} O que você vê? Se for um erro de sistema, explique.` },
+      {
+        inlineData: {
+          mimeType: file.type,
+          data: base64Image,
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    const output = await response.text();
+    addMessage("Chatbot: " + output);
+  };
+
+  reader.readAsDataURL(file); // Converte para base64
+});
+
+
+    // Eventos DOM
+    window.addEventListener('DOMContentLoaded', () => {
+      carregarManualPDF(); // Carrega manual ao iniciar
+
+      document.getElementById('chatbotBtn').addEventListener('click', () => {
+        document.getElementById('chatContainer').style.display = 'flex';
+      });
+
+      document.getElementById('closeBtn').addEventListener('click', () => {
+        document.getElementById('chatContainer').style.display = 'none';
+      });
+
+      document.getElementById('sendBtn').addEventListener('click', () => {
+        const userInput = document.getElementById('userInput').value.trim();
+        if (userInput) {
+          addMessage("Você: " + userInput);
+          document.getElementById('userInput').value = '';
+          enviarMensagem(userInput);
+        }
+      });
+    });
+
+    function addMessage(message) {
+      const chatMessages = document.getElementById('chatMessages');
+      const msg = document.createElement('div');
+      msg.textContent = message;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addImageToChat(base64) {
+  const chatMessages = document.getElementById('chatMessages');
+  const img = document.createElement('img');
+  img.src = 'data:image/png;base64,' + base64;
+  img.style.maxWidth = '100%';
+  img.style.margin = '10px 0';
+  chatMessages.appendChild(img);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
+  </script>
+
+
 </body>
 </html>
