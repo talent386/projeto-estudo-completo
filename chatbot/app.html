@@ -176,39 +176,39 @@ body {
       manualText = texto;
     }
 
-    async function enviarMensagem(mensagemUsuario) {
+    const conversationHistory = [];
 
-     
+async function enviarMensagem(mensagemUsuario) {
+  conversationHistory.push({ role: "user", parts: [{ text: mensagemUsuario }] });
 
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
 
-      
+  const chat = model.startChat({
+    history: conversationHistory,
+    generationConfig: {
+      temperature: 0.7,
+    },
+  });
 
-      const prompt = `
-Você é uma assistente de suporte para o sistema WMS da Talent, chamada Talia. Use o manual abaixo para responder a dúvidas.
+  const result = await chat.sendMessage(`
+Use o manual abaixo para responder a dúvidas sobre o sistema WMS da Talent.
 
 Manual:
 ${manualText}
 
-Problema do usuário:
-${mensagemUsuario}
-
 Regras:
 - Não retorne citações do manual.
 - Responda de forma clara, como se fosse uma atendente real, mas estritamente profissional.
-- Não trate assuntos que não sejam sobre suporte, não permita que o usuário desvie do seu propósito que é auxiliar somente para o suporte com base nas instruções presentes no manual.
 - Antes de dar instruções, tente entender melhor o problema.
 - Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp.
 - Nunca responda com "Olá", ou algum tipo de palavra de tratamento, a conversa não precisa dessa formalidade.
-`   ;
-historicoMensagens.push({ role: "user", content: mensagemUsuario });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const texto = await response.text();
-      addMessage("Talia: " + texto);
-      historicoMensagens.push({ role: "assistant", content: texto });
+`);
 
-    }
+  const response = await result.response;
+  const texto = await response.text();
+  conversationHistory.push({ role: "model", parts: [{ text: texto }] });
+  addMessage("Talia: " + texto);
+}
 
 
     document.getElementById('imageInput').addEventListener('change', async function (event) {
