@@ -40,7 +40,7 @@ body {
 
 .chat-container {
     position: fixed;
-    bottom: 80px;
+    bottom: 90px;
     right: 20px;
     width: 550px;
     height: 600px;
@@ -76,6 +76,8 @@ body {
     overflow-y: auto;
     max-height: 500px;
     border-bottom: 1px solid #ccc;
+      display: flex; 
+  flex-direction: column;
 }
 
 .chat-input {
@@ -116,15 +118,47 @@ body {
     cursor: pointer;
 }
 
-.message-class {
+.user-message {
     background-color: #f1f1f1; 
     padding: 10px;
     border-radius: 5px;
     margin-bottom: 10px;
     max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
+      text-align: right;
+      width: fit-content;
+  align-self: flex-end !important;
 }
+
+
+.talia-message {
+   padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    max-width: 80%;
+    width: fit-content;
+  background-color: #d8e0ff;
+  text-align: justify;
+  align-self: flex-start;}
+
+
+  .message-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.talia-wrapper {
+  align-items: flex-start;
+}
+
+.message-sender {
+  font-size: 12px;
+  color: #02007c;
+  margin-top: 0px;
+  padding: 0 8px;
+}
+
 
     
   </style>
@@ -139,8 +173,14 @@ body {
         <button id="closeBtn">X</button>
       </div>
       <div class="chat-messages" id="chatMessages">
-      <div class="message-class">Talia: Olá, sou sua assistente Nível 1 de Suporte, como posso te auxíliar hoje? Você pode tanto me descrever seu problema quanto me enviar um print da sua tela, dependendo da sua nessecidade!</div>
-      </div>
+  <div class="message-wrapper talia-wrapper">
+    <div class="message-class talia-message">
+      Olá! Me chamo <span style="color: #1843ff; font-weight: 500;">Talia</span> e sou sua Assistente de Suporte Nível 1. Como posso te ajudar hoje? <br>
+      Você pode descrever o seu problema ou, se preferir, me enviar um print da sua tela, o que for mais fácil para você. Estou à disposição!
+    </div>
+    <div class="message-sender">Talia</div>
+  </div>
+</div>
       <div class="chat-input">
         <input type="text" id="userInput" placeholder="Digite sua mensagem..." />
         <button id="sendBtn">Enviar</button>
@@ -168,7 +208,7 @@ body {
 
       const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
       let texto = '';
-      for (let i = 0; i < pdf.numPages && i < 3; i++) { 
+      for (let i = 0; i < pdf.numPages; i++) { 
         const page = await pdf.getPage(i + 1);
         const content = await page.getTextContent();
         texto += content.items.map(item => item.str).join(' ') + '\n';
@@ -198,9 +238,11 @@ ${manualText}
 
 Regras:
 - Não retorne citações do manual.
-- Responda de forma clara, como se fosse uma atendente real, mas estritamente profissional.
+- Sempre quando solicitado retorne os links presentes no manual.
+- Retorne o link como texto normal, sem necessidade de utilizar markdown.
+- Responda de forma clara, como se fosse uma atendente real, mas estritamente profissional e educada.
 - Antes de dar instruções, tente entender melhor o problema.
-- Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp.
+- Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
 - Nunca responda com "Olá", ou algum tipo de palavra de tratamento, a conversa não precisa dessa formalidade.
 `);
 
@@ -221,12 +263,10 @@ Regras:
     const base64Image = e.target.result.split(',')[1]; 
     addImageToChat(base64Image);
 
-    // Enviar imagem + prompt ao Gemini
+    // Enviar imagem + prompt 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
 
-    const result = await model.generateContent([
-      { text: `
- 
+ const promptImagem = `
 Você é uma assistente de suporte para o sistema WMS da Talent.
 
 Analise a imagem enviada pelo usuário e compare com o conteúdo do manual a seguir:
@@ -235,28 +275,39 @@ ${manualText}
 
 Regras:
 - Caso a imagem contenha uma mensagem de erro, tela, ou qualquer informação visível que esteja documentada no manual, explique ao usuário o que significa e oriente como resolver, com linguagem clara e objetiva.
-- Se o problema mostrado na imagem **não constar no manual**, diga que infelizmente não é possível ajudar com base nas informações disponíveis e oriente o usuário a procurar o suporte via WhatsApp.
+- Se o problema mostrado na imagem não constar no manual, diga que infelizmente não é possível ajudar com base nas informações disponíveis e oriente o usuário a procurar o suporte via WhatsApp.
 - Responda sempre de forma educada, como um atendente humano experiente, evitando copiar trechos exatos do manual.
 - Não comente assuntos fora do contexto do sistema WMS, mesmo que o usuário tente mudar de assunto.
 - Nunca responda com "Olá", ou algum tipo de palavra de tratamento, a conversa não precisa dessa formalidade.
-- Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp.
+- Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
 - Não utilize caracteres especiais para realçar o texto, responda de forma clara, como se fosse uma atendente real, mas ainda estritamente profissional e educada.
-`
-},
+`;
 
-        
-        
-      {
-        inlineData: {
-          mimeType: file.type,
-          data: base64Image,
-        }
-      }
-    ]);
 
-    const response = await result.response;
-    const output = await response.text();
-    addMessage("Talia: " + output);
+const chat = model.startChat({
+  history: conversationHistory,
+  generationConfig: { temperature: 0.7 }
+});
+
+const result = await chat.sendMessage([
+  { text: promptImagem },
+  {
+    inlineData: {
+      mimeType: file.type,
+      data: base64Image,
+    }
+  }
+]);
+
+
+// Atualiza o histórico com imagem + resposta
+const response = await result.response;
+const output = await response.text();
+
+conversationHistory.push({ role: "user", parts: [{ text: "[imagem enviada pelo usuário]" }] });
+conversationHistory.push({ role: "model", parts: [{ text: output }] });
+
+addMessage("Talia: " + output);
   };
 
   reader.readAsDataURL(file); 
@@ -285,27 +336,50 @@ Regras:
       });
     });
 
-    function addMessage(message) {
-      const chatMessages = document.getElementById('chatMessages');
-      const msg = document.createElement('div');
-      msg.classList.add('message-class');  
-      msg.textContent = message;
-      chatMessages.appendChild(msg);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+   function addMessage(message) {
+  const chatMessages = document.getElementById('chatMessages');
 
-      console.log(historicoMensagens)
+  const isTalia = message.startsWith("Talia:");
+  const cleanText = message.replace("Talia:", "").replace("Você:", "").trim();
 
-    }
+  // Cria um contêiner para agrupar mensagem e nome
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('message-wrapper');
+  wrapper.classList.add(isTalia ? 'talia-wrapper' : 'user-wrapper');
+
+  const msg = document.createElement('div');
+  msg.classList.add('message-class');
+  msg.classList.add(isTalia ? 'talia-message' : 'user-message');
+  msg.innerHTML = linkify(cleanText);
+
+  const nome = document.createElement('div');
+  nome.classList.add('message-sender');
+  nome.textContent = isTalia ? 'Talia' : 'Você';
+
+  wrapper.appendChild(msg);
+  wrapper.appendChild(nome);
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 
     function addImageToChat(base64) {
   const chatMessages = document.getElementById('chatMessages');
   const img = document.createElement('img');
-  img.classList.add('message-class');  
+  img.classList.add('user-message');  
   img.src = 'data:image/png;base64,' + base64;
   img.style.maxWidth = '100%';
   img.style.margin = '10px 0';
   chatMessages.appendChild(img);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
+function linkify(text) {
+  const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, function(url) {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
 }
 
 
