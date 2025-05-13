@@ -42,8 +42,8 @@ body {
     position: fixed;
     bottom: 90px;
     right: 20px;
-    width: 550px;
-    height: 600px;
+    width: 650px;
+    height: 800px;
     display: none;
     flex-direction: column;
     border: 1px solid #ccc;
@@ -74,7 +74,7 @@ body {
     flex-grow: 1;
     padding: 10px;
     overflow-y: auto;
-    max-height: 500px;
+    max-height: 700px;
     border-bottom: 1px solid #ccc;
       display: flex; 
   flex-direction: column;
@@ -160,6 +160,26 @@ body {
 }
 
 
+.typing-indicator {
+  display: inline-block;
+  font-style: italic;
+  font-size: 14px;
+  color: #02006d;
+  margin: 5px;
+  padding: 10px;
+  background-color: #ccd3e7;
+  border-radius: 8px;
+  max-width: 200px;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+
     
   </style>
 </head>
@@ -175,7 +195,7 @@ body {
       <div class="chat-messages" id="chatMessages">
   <div class="message-wrapper talia-wrapper">
     <div class="message-class talia-message">
-      Olá! Me chamo <span style="color: #1843ff; font-weight: 500;">Talia</span> e sou sua Assistente de Suporte Nível 1. Como posso te ajudar hoje? <br>
+      Olá! Me chamo <span style="color: #5a06c9;">Talia</span> e sou sua Assistente de Suporte Nível 1. Como posso te ajudar hoje? <br>
       Você pode descrever o seu problema ou, se preferir, me enviar um print da sua tela, o que for mais fácil para você. Estou à disposição!
     </div>
     <div class="message-sender">Talia</div>
@@ -201,7 +221,7 @@ body {
 
 
     async function carregarManualPDF() {
-      const pdfUrl = "data\\Manual_WMS.pdf"; 
+      const pdfUrl = "data\\Manual_WMS_Segurança1.pdf"; 
 
       const pdfjsLib = window['pdfjs-dist/build/pdf'];
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
@@ -220,6 +240,7 @@ body {
 
 async function enviarMensagem(mensagemUsuario) {
   conversationHistory.push({ role: "user", parts: [{ text: mensagemUsuario }] });
+  showTypingIndicator();
 
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
 
@@ -248,6 +269,7 @@ Regras:
 
   const response = await result.response;
   const texto = await response.text();
+    hideTypingIndicator(); 
   conversationHistory.push({ role: "model", parts: [{ text: texto }] });
   addMessage("Talia: " + texto);
 }
@@ -260,6 +282,7 @@ Regras:
   const reader = new FileReader();
 
   reader.onload = async function (e) {
+    showTypingIndicator();
     const base64Image = e.target.result.split(',')[1]; 
     addImageToChat(base64Image);
 
@@ -303,6 +326,7 @@ const result = await chat.sendMessage([
 // Atualiza o histórico com imagem + resposta
 const response = await result.response;
 const output = await response.text();
+ hideTypingIndicator();
 
 conversationHistory.push({ role: "user", parts: [{ text: "[imagem enviada pelo usuário]" }] });
 conversationHistory.push({ role: "model", parts: [{ text: output }] });
@@ -374,14 +398,45 @@ addMessage("Talia: " + output);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-
 function linkify(text) {
   const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
-  return text.replace(urlRegex, function(url) {
+  const html = text
+  .replace(/\n/g, "<br>")
+  .replace(/\*/g, "&bull;")
+  .replace(urlRegex, function(url) 
+  {
     return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
   });
+  return html;
 }
 
+
+let typingIndicator;
+
+function showTypingIndicator() {
+  const chatMessages = document.getElementById('chatMessages');
+
+  // Cria o elemento apenas se ainda não existe
+  if (!typingIndicator) {
+    typingIndicator = document.createElement('div');
+    typingIndicator.classList.add('message-wrapper', 'talia-wrapper');
+
+    const indicatorContent = document.createElement('div');
+    indicatorContent.classList.add('typing-indicator');
+    indicatorContent.textContent = 'Talia está digitando...';
+
+    typingIndicator.appendChild(indicatorContent);
+    chatMessages.appendChild(typingIndicator);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+function hideTypingIndicator() {
+  if (typingIndicator && typingIndicator.parentNode) {
+    typingIndicator.parentNode.removeChild(typingIndicator);
+    typingIndicator = null;
+  }
+}
 
 
 console.log(historicoMensagens)
