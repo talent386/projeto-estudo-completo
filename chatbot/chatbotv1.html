@@ -210,39 +210,47 @@ body {
 
     const genAI = new GoogleGenerativeAI(API_KEY);
     let manualText = "";
-
-    let historicoMensagens = []
+    let historicoMensagens = [];
 
     async function carregarManualMD() {
-      const mdUrl = "Manual_WMS_Segurança.md"; // URL do seu arquivo Markdown
-      const response = await fetch(mdUrl);
-      const markdownText = await response.text();
+      const mdUrls = ["data/Manual_WMS_Seguranca.md", "data/Mapa.md"];
+      let textoCompleto = "";
 
-      // Identificar as imagens no Markdown
-      const matches = [...markdownText.matchAll(/!\[.*?\]\((.*?)\)/g)];
-      const imagensBase64 = await Promise.all(matches.map(async m => {
-        const path = m[1]; // Exemplo: img/erro-login.png
-        const base64 = await carregarImagemComoBase64(path);
-        return {
-          path,
-          base64
-        };
-      }));
+      for (const mdUrl of mdUrls) {
+        const response = await fetch(mdUrl);
+        let markdownText = await response.text();
 
-      manualText = markdownText; // Armazena o texto do Markdown
+        const matches = [...markdownText.matchAll(/!\[.*?\]\((.*?)\)/g)];
+
+        for (const match of matches) {
+          const path = match[1];
+          try {
+            const base64 = await carregarImagemComoBase64(path);
+            const imgTag = `![imagem convertida](data:image/png;base64,${base64})`;
+            markdownText = markdownText.replace(match[0], imgTag);
+          } catch (err) {
+            console.warn(`Erro ao carregar imagem ${path}:`, err);
+          }
+        }
+
+        textoCompleto += markdownText + "\n";
+      }
+
+      manualText = textoCompleto;
     }
 
-    // Função que carrega uma imagem como Base64
     async function carregarImagemComoBase64(caminho) {
-      const resposta = await fetch(caminho);
-      const blob = await resposta.blob();
-      const reader = new FileReader();
+      const response = await fetch(caminho);
+      const blob = await response.blob();
       return new Promise((resolve, reject) => {
+        const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result.split(',')[1]);
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
     }
+
+
 
     async function enviarMensagem(mensagemUsuario) {
       historicoMensagens.push({ role: "user", parts: [{ text: mensagemUsuario }] });
@@ -266,7 +274,6 @@ body {
         Regras:
         - Não retorne citações do manual.
         - Sempre quando solicitado retorne os links presentes no manual.
-        - Retorne o link como texto normal, sem necessidade de utilizar markdown.
         - Responda de forma clara, como se fosse uma atendente real, mas estritamente profissional e educada.
         - Antes de dar instruções, tente entender melhor o problema.
         - Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
@@ -339,17 +346,29 @@ body {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function linkify(text) {
-      const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
-      const html = text
-       .replace(/\n/g, "<br>")
-       .replace(/\*\*/g, "")
-       .replace(/\*/g, "&bull;")
-       .replace(urlRegex, function(url) {
-         return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-       });
-      return html;
-    }
+function linkify(text) {
+  const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
+  const imagemInternaRegex = /(?:!\[.*?\]|\[.*?\])?\((\/data\/imagens_md\/[^\s)]+?\.(?:png|jpg|jpeg|gif))\)/gi;
+
+  let html = text
+    .replace(/\n/g, "<br>")
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "&bull;");
+
+  // Converte links de imagem Markdown em <img>
+  html = html.replace(imagemInternaRegex, (match, path) => {
+    return `<br><img src="${path}" alt="Imagem do manual" style="max-width:100%; border-radius:6px; margin:10px 0;">`;
+  });
+
+  // Converte links externos em <a>
+  html = html.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
+
+  return html;
+}
+
+
 
     let typingIndicator;
 
@@ -376,6 +395,58 @@ body {
         typingIndicator = null;
       }
     }
+
+
+document.getElementById('imageInput').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const base64 = await fileToBase64(file);
+  addImageToChat(base64);
+
+  await enviarImagemParaGemini(base64);
+});
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+
+async function enviarImagemParaGemini(base64Image) {
+  showTypingIndicator();
+
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        mimeType: "image/png",
+        data: base64Image
+      }
+    },
+    {
+      text: `
+        Analise essa imagem de tela do sistema WMS da Talent.
+        Ajude o usuário a entender o que está acontecendo ou oriente como resolver o problema apresentado.
+        Seja sempre clara, profissional e útil.
+      `
+    }
+  ]);
+
+  const response = await result.response;
+  const texto = await response.text();
+  hideTypingIndicator();
+  historicoMensagens.push({ role: "model", parts: [{ text: texto }] });
+  addMessage("Talia: " + texto);
+}
+
+
+
   </script>
 </body>
 </html>
