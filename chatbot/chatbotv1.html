@@ -220,20 +220,23 @@ body {
         const response = await fetch(mdUrl);
         let markdownText = await response.text();
 
-        const matches = [...markdownText.matchAll(/!\[.*?\]\((.*?)\)/g)];
+        //Não é mais útil
 
-        for (const match of matches) {
-          const path = match[1];
-          try {
-            const base64 = await carregarImagemComoBase64(path);
-            const imgTag = `![imagem convertida](data:image/png;base64,${base64})`;
-            markdownText = markdownText.replace(match[0], imgTag);
-          } catch (err) {
-            console.warn(`Erro ao carregar imagem ${path}:`, err);
-          }
-        }
 
-        textoCompleto += markdownText + "\n";
+        // const matches = [...markdownText.matchAll(/!\[.*?\]\((.*?)\)/g)];
+
+        // for (const match of matches) {
+        //   const path = match[1];
+        //   try {
+        //     const base64 = await carregarImagemComoBase64(path);
+        //     const imgTag = `![imagem convertida](data:image/png;base64,${base64})`;
+        //     markdownText = markdownText.replace(match[0], imgTag);
+        //   } catch (err) {
+        //     console.warn(`Erro ao carregar imagem ${path}:`, err);
+        //   }
+        // }
+
+        textoCompleto += "\n ----- \n" + markdownText ;
       }
 
       manualText = textoCompleto;
@@ -288,7 +291,7 @@ body {
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      carregarManualMD(); // Carregar o conteúdo do arquivo Markdown
+      carregarManualMD();
 
       document.getElementById('chatbotBtn').addEventListener('click', () => {
         document.getElementById('chatContainer').style.display = 'flex';
