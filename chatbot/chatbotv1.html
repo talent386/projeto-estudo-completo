@@ -213,28 +213,12 @@ body {
     let historicoMensagens = [];
 
     async function carregarManualMD() {
-      const mdUrls = ["data/Manual_WMS_Seguranca.md", "data/Mapa.md"];
+      const mdUrls = ["data/Manual_WMS_Seguranca.md", "data/Mapa.md", "data/Manual_WMS_Contrato.md"];
       let textoCompleto = "";
 
       for (const mdUrl of mdUrls) {
         const response = await fetch(mdUrl);
         let markdownText = await response.text();
-
-        //Não é mais útil
-
-
-        // const matches = [...markdownText.matchAll(/!\[.*?\]\((.*?)\)/g)];
-
-        // for (const match of matches) {
-        //   const path = match[1];
-        //   try {
-        //     const base64 = await carregarImagemComoBase64(path);
-        //     const imgTag = `![imagem convertida](data:image/png;base64,${base64})`;
-        //     markdownText = markdownText.replace(match[0], imgTag);
-        //   } catch (err) {
-        //     console.warn(`Erro ao carregar imagem ${path}:`, err);
-        //   }
-        // }
 
         textoCompleto += "\n ----- \n" + markdownText ;
       }
@@ -276,7 +260,9 @@ body {
 
         Regras:
         - Não retorne citações do manual.
-        - Sempre quando solicitado retorne os links presentes no manual.
+        - O usuário não tem acesso ao manual, apenas você, não tente linkar partes do manual.
+        - Sempre retorne os links de imagens para ilustrar suas respostas, SE ESSAS IMAGENS EXISTIREM, NÃO CRIE IMAGENS:
+            - Exemplo de um link de imagem ![nome da imagem para contexto](link)
         - Responda de forma clara, como se fosse uma atendente real, mas estritamente profissional e educada.
         - Antes de dar instruções, tente entender melhor o problema.
         - Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
@@ -434,9 +420,21 @@ async function enviarImagemParaGemini(base64Image) {
     },
     {
       text: `
-        Analise essa imagem de tela do sistema WMS da Talent.
-        Ajude o usuário a entender o que está acontecendo ou oriente como resolver o problema apresentado.
-        Seja sempre clara, profissional e útil.
+       
+Você é uma assistente de suporte para o sistema WMS da Talent.
+
+Analise a imagem enviada pelo usuário e compare com o conteúdo do manual a seguir:
+
+${manualText}
+
+Regras:
+- Caso a imagem contenha uma mensagem de erro, tela, ou qualquer informação visível que esteja documentada no manual, explique ao usuário o que significa e oriente como resolver, com linguagem clara e objetiva.
+- Se o problema mostrado na imagem não constar no manual, diga que infelizmente não é possível ajudar com base nas informações disponíveis e oriente o usuário a procurar o suporte via WhatsApp.
+- Responda sempre de forma educada, como um atendente humano experiente, evitando copiar trechos exatos do manual.
+- Não comente assuntos fora do contexto do sistema WMS, mesmo que o usuário tente mudar de assunto.
+- Nunca responda com "Olá", ou algum tipo de palavra de tratamento, a conversa não precisa dessa formalidade.
+- Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
+- Não utilize caracteres especiais para realçar o texto, responda de forma clara, como se fosse uma atendente real, mas ainda estritamente profissional e educada.
       `
     }
   ]);
