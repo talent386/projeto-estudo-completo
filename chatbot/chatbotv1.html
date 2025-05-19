@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Chat WMS</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
   <style>
 
 * {
@@ -212,6 +211,9 @@ body {
     let manualText = "";
     let historicoMensagens = [];
 
+let manualCarregado = false;
+
+
     async function carregarManualMD() {
       const mdUrls = ["data/Manual_WMS_Seguranca.md", "data/Mapa.md", "data/Manual_WMS_Contrato.md"];
       let textoCompleto = "";
@@ -220,54 +222,62 @@ body {
         const response = await fetch(mdUrl);
         let markdownText = await response.text();
 
-        textoCompleto += "\n ----- \n" + markdownText ;
+        manualText += "\n ----- \n" + markdownText ;
       }
+ historicoMensagens.unshift({
+    role: "user",
+    parts: [{
+      text: `Este é o conteúdo do manual do sistema WMS da Talent. Use-o como base para responder dúvidas:\n\n${manualText}`
+    }]
+  }); 
+  manualCarregado = true;
 
-      manualText = textoCompleto;
-    }
+}
 
-    async function carregarImagemComoBase64(caminho) {
-      const response = await fetch(caminho);
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    }
-
-
-
-    async function enviarMensagem(mensagemUsuario) {
+    async function enviarMensagem(mensagemUsuario, imagemBase64 = null) {
       historicoMensagens.push({ role: "user", parts: [{ text: mensagemUsuario }] });
       showTypingIndicator();
 
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-      const chat = model.startChat({
-        history: historicoMensagens,
-        generationConfig: {
-          temperature: 0.7,
-        },
-      });
 
-      const result = await chat.sendMessage(`
-        Use o manual abaixo para responder a dúvidas sobre o sistema WMS da Talent.
+const partes = [];
 
-        Manual:
-        ${manualText}
+if (mensagemUsuario) partes.push({ text: mensagemUsuario });
+if (imagemBase64) {
+  partes.push({
+    inlineData: {
+      mimeType: "image/png",
+      data: imagemBase64
+    }
+  });
+}
 
-        Regras:
-        - Não retorne citações do manual.
-        - O usuário não tem acesso ao manual, apenas você, não tente linkar partes do manual.
-        - Sempre retorne os links de imagens para ilustrar suas respostas, SE ESSAS IMAGENS EXISTIREM, NÃO CRIE IMAGENS:
-            - Exemplo de um link de imagem ![nome da imagem para contexto](link)
-        - Responda de forma clara, como se fosse uma atendente real, mas estritamente profissional e educada.
-        - Antes de dar instruções, tente entender melhor o problema.
-        - Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
-        - Nunca responda com "Olá", ou algum tipo de palavra de tratamento, a conversa não precisa dessa formalidade.
-      `);
+partes.push({ text: `
+Use o manual do sistema WMS da Talent para responder dúvidas, seguindo estas regras:
+
+* Não cite o manual nem faça referência direta a ele.
+* O usuário não tem acesso ao manual; não tente fornecer links ou partes dele.
+* Sempre retorne links de imagens relacionadas, se existirem.
+* Se a imagem mostrar erro ou informação documentada, explique o significado e oriente claramente a solução.
+* Se o problema na imagem não estiver no manual, informe que não é possível ajudar e oriente contato com suporte via WhatsApp.
+* Responda de forma educada, profissional e clara, como um atendente experiente.
+* Não use palavras de saudação ou tratamento; seja direto.
+* Não responda a assuntos fora do sistema WMS.
+* Se não conseguir resolver, oriente contato com suporte via WhatsApp como último recurso.
+* Exemplo de link de imagem: ![nome da imagem](link)
+
+Responda sempre com objetividade e clareza, mantendo profissionalismo.
+` });
+
+
+
+const result = await model.generateContent({
+  contents: [{ role: "user", parts:partes }],
+  generationConfig: {
+    temperature: 0.7,
+  },
+});
 
       const response = await result.response;
       const texto = await response.text();
@@ -287,13 +297,17 @@ body {
         document.getElementById('chatContainer').style.display = 'none';
       });
 
-      document.getElementById('sendBtn').addEventListener('click', () => {
+      document.getElementById('sendBtn').addEventListener('click', async () => {
         const userInput = document.getElementById('userInput').value.trim();
-        if (userInput) {
-          addMessage("Você: " + userInput);
-          document.getElementById('userInput').value = '';
-          enviarMensagem(userInput);
-        }
+        if (!manualCarregado) {
+    alert("Aguarde, carregando informações do sistema...");
+    return;
+  }
+  if (userInput) {
+    addMessage("Você: " + userInput);
+    document.getElementById('userInput').value = '';
+    await enviarMensagem(userInput);
+  }
       });
     });
 
@@ -385,16 +399,20 @@ function linkify(text) {
       }
     }
 
-
 document.getElementById('imageInput').addEventListener('change', async (event) => {
+  if (!manualCarregado) {
+    alert("Aguarde, carregando informações do sistema...");
+    return;
+  }
+
   const file = event.target.files[0];
   if (!file) return;
 
   const base64 = await fileToBase64(file);
   addImageToChat(base64);
-
-  await enviarImagemParaGemini(base64);
+  await enviarMensagem('', base64); 
 });
+
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -404,48 +422,6 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
-
-
-async function enviarImagemParaGemini(base64Image) {
-  showTypingIndicator();
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        mimeType: "image/png",
-        data: base64Image
-      }
-    },
-    {
-      text: `
-       
-Você é uma assistente de suporte para o sistema WMS da Talent.
-
-Analise a imagem enviada pelo usuário e compare com o conteúdo do manual a seguir:
-
-${manualText}
-
-Regras:
-- Caso a imagem contenha uma mensagem de erro, tela, ou qualquer informação visível que esteja documentada no manual, explique ao usuário o que significa e oriente como resolver, com linguagem clara e objetiva.
-- Se o problema mostrado na imagem não constar no manual, diga que infelizmente não é possível ajudar com base nas informações disponíveis e oriente o usuário a procurar o suporte via WhatsApp.
-- Responda sempre de forma educada, como um atendente humano experiente, evitando copiar trechos exatos do manual.
-- Não comente assuntos fora do contexto do sistema WMS, mesmo que o usuário tente mudar de assunto.
-- Nunca responda com "Olá", ou algum tipo de palavra de tratamento, a conversa não precisa dessa formalidade.
-- Se não conseguir resolver, oriente o usuário a entrar em contato com o suporte via WhatsApp, como ultimo recurso.
-- Não utilize caracteres especiais para realçar o texto, responda de forma clara, como se fosse uma atendente real, mas ainda estritamente profissional e educada.
-      `
-    }
-  ]);
-
-  const response = await result.response;
-  const texto = await response.text();
-  hideTypingIndicator();
-  historicoMensagens.push({ role: "model", parts: [{ text: texto }] });
-  addMessage("Talia: " + texto);
-}
-
 
 
   </script>
