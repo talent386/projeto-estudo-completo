@@ -231,11 +231,10 @@ let manualCarregado = false;
 
 }
 
-
+let pensamento 
 
 
  async function PensarSobre(mensagemUsuario, imagemBase64 = null) {
-      historicoMensagens.push({ role: "user", parts: [{ text: mensagemUsuario }] });
       showTypingIndicator();
 
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -258,7 +257,9 @@ Use o manual do sistema WMS da Talent para responder dúvidas, seguindo estas re
 
 ${manualText}
 
-* com base no manual pense sobre a dúvida do usuário.
+* com base no manual pense sobre a dúvida do usuário, quais as possíveis duvidas ou problemas relacionados a isso?.
+* Quais informações a mais são necessárias para que o contexto fique completo?
+* se for uma imagem recebida descreva o conteúdo dela e quais dúvidas ela pode estar associada.
 
 Elabore quais os principais problemas relacionados a mensagem de acordo com o manual:
 ${mensagemUsuario} ou ${imagemBase64}
@@ -277,14 +278,16 @@ const result = await model.generateContent({
  const response = await result.response;
       const texto = await response.text();
       hideTypingIndicator(); 
-      historicoMensagens.push({ role: "model", parts: [{ text: texto }] });
+        pensamento = texto
       addMessage("Talia: " + texto);
+
+
+        enviarMensagem(pensamento)
     }
 
 
 
     async function enviarMensagem(pensamento) {
-      historicoMensagens.push({ role: "user", parts: [{ text: mensagemUsuario }] });
       showTypingIndicator();
 
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -292,15 +295,8 @@ const result = await model.generateContent({
 
 const partes = [];
 
-if (mensagemUsuario) partes.push({ text: mensagemUsuario });
-if (imagemBase64) {
-  partes.push({
-    inlineData: {
-      mimeType: "image/png",
-      data: imagemBase64
-    }
-  });
-}
+ partes.push({ text: pensamento });
+
 
 partes.push({ text: `
 Use o manual do sistema WMS da Talent para responder dúvidas, seguindo estas regras:
@@ -322,8 +318,8 @@ ${manualText}
 Responda sempre com objetividade e clareza, mantendo profissionalismo.
 
 
-Responda a mensagem:
-${mensagemUsuario} ou ${imagemBase64}
+Esclareça e ajude o usuário sobre:
+${pensamento} 
 
 ` });
 
@@ -365,7 +361,7 @@ const result = await model.generateContent({
   if (userInput) {
     addMessage("Você: " + userInput);
     document.getElementById('userInput').value = '';
-    await enviarMensagem(userInput);
+    await PensarSobre(userInput);
   }
       });
     });
