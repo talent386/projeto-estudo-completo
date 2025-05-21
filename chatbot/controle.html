@@ -174,6 +174,27 @@ body {
   50% { opacity: 1; }
   100% { opacity: 0.3; }
 }
+
+
+#controle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.95);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#controle.hidden {
+  display: none !important;
+}
+
+
   </style>
 </head>
 <body>
@@ -301,9 +322,6 @@ const result = await model.generateContent({
         gerarControle();
       });
 
-document.getElementById('button-controle').addEventListener('click', () => {
-    document.getElementById('controle').style.display = 'none'
-})
 
       document.getElementById('closeBtn').addEventListener('click', () => {
         document.getElementById('chatContainer').style.display = 'none';
@@ -455,7 +473,7 @@ function gerarControle() {
   botoes.forEach(btn => {
     btn.addEventListener('click', () => {
       const moduloId = btn.getAttribute('value');
-      controleAcesso(moduloId); // agora envia o valor numérico correto
+      controleAcesso(moduloId); 
       controle.style.display = 'none';
     });
   });
